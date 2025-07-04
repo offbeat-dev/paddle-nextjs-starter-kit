@@ -51,6 +51,9 @@ export default function SubscriptionsScreen() {
             style={styles.browseButton}
             onPress={() => router.push('/pricing')}
           >
+            <Text style={styles.browseButtonText}>Browse Plans</Text>
+          </TouchableOpacity>
+        </View>
 
         {subscriptions.length === 0 ? (
           <View style={styles.emptyState}>
@@ -65,22 +68,20 @@ export default function SubscriptionsScreen() {
         ) : (
           <View style={styles.subscriptionsList}>
             {subscriptions.map((subscription) => (
-              <View key={subscription.subscription_id} style={styles.subscriptionCard}>
-            <View key={subscription.id} style={styles.subscriptionCard}>
-                  <View style={styles.cardTitle}>
-                    <Text style={styles.subscriptionName}>
-                      Subscription {subscription.subscription_id.slice(-8)}
+              <View key={subscription.id} style={styles.subscriptionCard}>
+                <View style={styles.cardTitle}>
+                  <Text style={styles.subscriptionName}>
                     Subscription {subscription.id.slice(-8)}
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        { backgroundColor: getStatusColor(subscription.subscription_status) },
-                      { backgroundColor: getStatusColor(subscription.status) },
-                    >
-                      <Text style={styles.statusText}>
-                        {subscription.subscription_status.toUpperCase()}
+                  </Text>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: getStatusColor(subscription.status) }
+                    ]}
+                  >
+                    <Text style={styles.statusText}>
                       {subscription.status.toUpperCase()}
-                    </View>
+                    </Text>
                   </View>
                 </View>
 
