@@ -5,12 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/hooks/useAuth';
 import { Colors } from '../../src/constants/Colors';
-import { supabase } from '../../src/lib/supabase';
+import { useSubscriptions } from '../../src/hooks/useSubscriptions';
+import { LoadingSpinner } from '../../src/components/LoadingSpinner';
 
 interface DashboardStats {
   activeSubscriptions: number;
@@ -20,53 +20,21 @@ interface DashboardStats {
 
 export default function DashboardScreen() {
   const { user } = useAuth();
+  const { subscriptions, loading: subscriptionsLoading } = useSubscriptions();
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
-    if (!user?.email) return;
-
-    try {
-      // Get customer data
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('customer_id')
-        .eq('email', user.email)
-        .single();
-
-      if (customer) {
-        // Get subscriptions
-        const { data: subscriptions } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('customer_id', customer.customer_id);
-
-        setStats({
-          activeSubscriptions: subscriptions?.length || 0,
-          totalSpent: '$0.00', // This would come from Paddle API
-          nextPayment: 'No upcoming payments',
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load dashboard data:', error);
-    } finally {
-      setLoading(false);
+    if (!subscriptionsLoading) {
+      setStats({
+        activeSubscriptions: subscriptions.filter(sub => sub.status === 'active').length,
+        totalSpent: '$0.00', // This would come from Paddle API
+        nextPayment: 'No upcoming payments',
+      });
     }
-  };
+  }, [subscriptions, subscriptionsLoading]);
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.accent} />
-          <Text style={styles.loadingText}>Loading dashboard...</Text>
-        </View>
-      </SafeAreaView>
-    );
+  if (subscriptionsLoading || !stats) {
+    return <LoadingSpinner message="Loading dashboard..." />;
   }
 
   return (
@@ -127,15 +95,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: Colors.textSecondary,
-    marginTop: 16,
   },
   scrollContent: {
     paddingHorizontal: 20,

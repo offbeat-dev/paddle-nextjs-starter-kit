@@ -5,66 +5,18 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../src/hooks/useAuth';
 import { Colors } from '../../src/constants/Colors';
-import { supabase } from '../../src/lib/supabase';
-
-interface Subscription {
-  subscription_id: string;
-  subscription_status: string;
-  price_id: string;
-  product_id: string;
-  scheduled_change: string | null;
-  customer_id: string;
-  created_at: string;
-  updated_at: string;
-}
+import { useSubscriptions } from '../../src/hooks/useSubscriptions';
+import { LoadingSpinner } from '../../src/components/LoadingSpinner';
+import { ErrorMessage } from '../../src/components/ErrorMessage';
+import { formatDate } from '../../src/utils/formatters';
 
 export default function SubscriptionsScreen() {
-  const { user } = useAuth();
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadSubscriptions();
-  }, []);
-
-  const loadSubscriptions = async () => {
-    if (!user?.email) return;
-
-    try {
-      // Get customer data first
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('customer_id')
-        .eq('email', user.email)
-        .single();
-
-      if (customer) {
-        // Get subscriptions for this customer
-        const { data: subscriptions, error } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('customer_id', customer.customer_id)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          throw error;
-        }
-
-        setSubscriptions(subscriptions || []);
-      }
-    } catch (error) {
-      console.error('Failed to load subscriptions:', error);
-      Alert.alert('Error', 'Failed to load subscriptions');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { subscriptions, loading, error, refetch } = useSubscriptions();
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -79,19 +31,12 @@ export default function SubscriptionsScreen() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
-
   if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.accent} />
-          <Text style={styles.loadingText}>Loading subscriptions...</Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <LoadingSpinner message="Loading subscriptions..." />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error} onRetry={refetch} />;
   }
 
   return (
@@ -102,7 +47,10 @@ export default function SubscriptionsScreen() {
           <Text style={styles.subtitle}>
             Manage your active subscriptions and billing
           </Text>
-        </View>
+          <TouchableOpacity 
+            style={styles.browseButton}
+            onPress={() => router.push('/pricing')}
+          >
 
         {subscriptions.length === 0 ? (
           <View style={styles.emptyState}>
@@ -118,20 +66,20 @@ export default function SubscriptionsScreen() {
           <View style={styles.subscriptionsList}>
             {subscriptions.map((subscription) => (
               <View key={subscription.subscription_id} style={styles.subscriptionCard}>
-                <View style={styles.cardHeader}>
+            <View key={subscription.id} style={styles.subscriptionCard}>
                   <View style={styles.cardTitle}>
                     <Text style={styles.subscriptionName}>
                       Subscription {subscription.subscription_id.slice(-8)}
-                    </Text>
+                    Subscription {subscription.id.slice(-8)}
                     <View
                       style={[
                         styles.statusBadge,
                         { backgroundColor: getStatusColor(subscription.subscription_status) },
-                      ]}
+                      { backgroundColor: getStatusColor(subscription.status) },
                     >
                       <Text style={styles.statusText}>
                         {subscription.subscription_status.toUpperCase()}
-                      </Text>
+                      {subscription.status.toUpperCase()}
                     </View>
                   </View>
                 </View>
@@ -140,22 +88,22 @@ export default function SubscriptionsScreen() {
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Price ID:</Text>
                     <Text style={styles.infoValue}>
-                      {subscription.price_id.slice(-8)}...
+                      {subscription.priceId.slice(-8)}...
                     </Text>
                   </View>
 
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Created:</Text>
                     <Text style={styles.infoValue}>
-                      {formatDate(subscription.created_at)}
+                      {formatDate(subscription.createdAt)}
                     </Text>
                   </View>
 
-                  {subscription.scheduled_change && (
+                  {subscription.scheduledChange && (
                     <View style={styles.infoRow}>
                       <Text style={styles.infoLabel}>Scheduled Change:</Text>
                       <Text style={styles.infoValue}>
-                        {formatDate(subscription.scheduled_change)}
+                        {formatDate(subscription.scheduledChange)}
                       </Text>
                     </View>
                   )}
@@ -166,7 +114,7 @@ export default function SubscriptionsScreen() {
                     <Text style={styles.actionButtonText}>View Details</Text>
                   </TouchableOpacity>
                   
-                  {subscription.subscription_status === 'active' && (
+                  {subscription.status === 'active' && (
                     <TouchableOpacity style={[styles.actionButton, styles.cancelButton]}>
                       <Text style={[styles.actionButtonText, styles.cancelButtonText]}>
                         Cancel
@@ -187,15 +135,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: Colors.textSecondary,
-    marginTop: 16,
   },
   scrollContent: {
     paddingHorizontal: 20,

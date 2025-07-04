@@ -45,7 +45,10 @@ export default function PricingScreen() {
     }
 
     try {
-      await openCheckout(tier.priceId[billingCycle], user.email);
+      await openCheckout({
+        priceId: tier.priceId[billingCycle],
+        email: user.email || undefined,
+      });
     } catch (error) {
       console.error('Failed to open checkout:', error);
     }
