@@ -1,6 +1,6 @@
 # Paddle Billing React Native App
 
-A React Native implementation of the Paddle Billing subscription management system, built with Expo and TypeScript.
+A complete React Native starter kit for Paddle Billing subscription management, built with Expo and TypeScript.
 
 ## Features
 
@@ -9,7 +9,8 @@ A React Native implementation of the Paddle Billing subscription management syst
 - 💰 **Pricing Plans** - Dynamic pricing with monthly/annual billing
 - 📱 **Cross-Platform** - Works on iOS and Android
 - 🎨 **Modern UI** - Clean, dark theme design
-- 🔄 **Real-time Updates** - Live subscription status updates
+- 🔄 **Real-time Updates** - Live subscription status via webhooks
+- 🚀 **Production Ready** - Built with best practices and scalability in mind
 
 ## Tech Stack
 
@@ -19,7 +20,8 @@ A React Native implementation of the Paddle Billing subscription management syst
 - **Database**: Supabase (PostgreSQL)
 - **Payments**: Paddle Billing
 - **Navigation**: Expo Router
-- **Styling**: React Native StyleSheet
+- **State Management**: React Context + Hooks
+- **Styling**: React Native StyleSheet with TypeScript
 
 ## Prerequisites
 
@@ -27,15 +29,15 @@ A React Native implementation of the Paddle Billing subscription management syst
 - Expo CLI
 - iOS Simulator (for iOS development)
 - Android Studio (for Android development)
-- Supabase account
-- Paddle Billing account
+- [Supabase account](https://supabase.com)
+- [Paddle Billing account](https://paddle.com)
 
 ## Setup
 
 1. **Clone and install dependencies**:
    ```bash
-   git clone <your-repo>
-   cd paddle-rn-app
+   git clone <repository-url>
+   cd paddle-react-native-starter
    npm install
    ```
 
@@ -52,16 +54,19 @@ A React Native implementation of the Paddle Billing subscription management syst
    EXPO_PUBLIC_PADDLE_CLIENT_TOKEN=your_paddle_client_token
    ```
 
-3. **Supabase Setup**:
+3. **Database Setup**:
    - Create a new Supabase project
-   - Run the migration from the original Next.js project to create the required tables
-   - Update your environment variables with the Supabase credentials
+   - Run the included migration to create required tables:
+     ```sql
+     -- See supabase/migrations/20240907140223_initialize.sql
+     ```
+   - Enable Row Level Security (RLS) policies
 
 4. **Paddle Setup**:
-   - Create a Paddle Billing account
+   - Create products and prices in your Paddle dashboard
    - Set up your products and prices
    - Update the price IDs in `src/constants/PricingTiers.ts`
-   - Configure webhook endpoints for subscription updates
+   - Configure webhook endpoints pointing to your backend
 
 ## Development
 
@@ -84,97 +89,136 @@ npm run android
 npm run web
 ```
 
+## Building for Production
+
+### iOS
+```bash
+npm run build:ios
+npm run submit:ios
+```
+
+### Android
+```bash
+npm run build:android
+npm run submit:android
+```
+
 ## Project Structure
 
 ```
 ├── app/                    # App Router pages
 │   ├── auth/              # Authentication screens
 │   ├── dashboard/         # Dashboard screens
-│   ├── pricing.tsx        # Pricing page
-│   └── index.tsx          # Home page
+│   ├── pricing.tsx        # Pricing screen
+│   └── index.tsx          # Home screen
 ├── src/
-│   ├── components/        # Reusable components
+│   ├── components/        # Shared UI components
 │   ├── constants/         # App constants
 │   ├── hooks/            # Custom hooks
 │   ├── lib/              # Utilities and configurations
-│   └── providers/        # Context providers
-└── assets/               # Static assets
+│   ├── providers/        # Context providers
+│   ├── types/            # TypeScript type definitions
+│   └── utils/            # Helper functions
+├── supabase/             # Database migrations
+└── assets/               # Static assets (icons, images)
 ```
 
 ## Key Features
 
 ### Authentication
-- Email/password authentication via Supabase
+- Secure email/password authentication
 - Secure session management
 - Protected routes
 
 ### Subscription Management
-- View active subscriptions
+- Real-time subscription status
 - Subscription status tracking
 - Payment history
-- Cancel subscriptions
+- Subscription management (cancel, update)
 
 ### Pricing
-- Dynamic pricing from Paddle
+- Dynamic pricing with Paddle integration
 - Monthly/annual billing options
 - Featured plan highlighting
-- Responsive pricing cards
+- Mobile-optimized pricing cards
 
 ### Dashboard
-- Overview of account status
+- Comprehensive account overview
 - Quick access to key features
 - Real-time data updates
+- Usage statistics
 
 ## Paddle Integration
 
 This app integrates with Paddle Billing for:
 
-- **Subscription Management**: Create, update, and cancel subscriptions
+- **Checkout**: Secure payment processing
+- **Subscription Lifecycle**: Create, update, cancel subscriptions
 - **Payment Processing**: Secure payment handling
-- **Webhook Processing**: Real-time subscription updates
-- **Price Management**: Dynamic pricing and localization
+- **Webhooks**: Real-time subscription status updates
+- **Pricing**: Dynamic pricing with localization support
 
 ### Webhook Setup
 
 Configure webhooks in your Paddle dashboard to point to your backend:
-- `subscription.created`
-- `subscription.updated` 
-- `customer.created`
-- `customer.updated`
+- `subscription.created` - New subscription events
+- `subscription.updated` - Subscription changes
+- `customer.created` - New customer events
+- `customer.updated` - Customer profile changes
 
-## Deployment
+## Mobile-Specific Considerations
 
-### iOS App Store
+### Paddle Integration
+This starter kit includes a placeholder Paddle provider. For production:
 
-1. Build for production:
-   ```bash
-   eas build --platform ios
-   ```
+1. **Native SDK**: Integrate Paddle's React Native SDK when available
+2. **WebView Checkout**: Use WebView for Paddle's web checkout
+3. **Deep Linking**: Handle post-checkout redirects via deep links
+4. **Platform Differences**: Handle iOS/Android payment flow differences
 
-2. Submit to App Store:
-   ```bash
-   eas submit --platform ios
-   ```
+### Performance
+- Optimized for mobile performance
+- Efficient state management
+- Minimal re-renders
+- Fast navigation transitions
 
-### Google Play Store
+### User Experience
+- Native mobile UI patterns
+- Touch-friendly interface
+- Responsive design for all screen sizes
+- Offline-first approach where possible
 
-1. Build for production:
-   ```bash
-   eas build --platform android
-   ```
+## Environment Variables
 
-2. Submit to Play Store:
-   ```bash
-   eas submit --platform android
-   ```
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `EXPO_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key | Yes |
+| `EXPO_PUBLIC_PADDLE_ENV` | Paddle environment (`sandbox` or `production`) | Yes |
+| `EXPO_PUBLIC_PADDLE_CLIENT_TOKEN` | Paddle client-side token | Yes |
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
+3. Implement your changes
+4. Test on both iOS and Android
 5. Submit a pull request
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Metro bundler issues**: Clear cache with `npx expo start --clear`
+2. **iOS build failures**: Ensure Xcode is up to date
+3. **Android build issues**: Check Android SDK configuration
+4. **Supabase connection**: Verify environment variables are set correctly
+
+### Getting Help
+
+- Check the [Expo documentation](https://docs.expo.dev/)
+- Review [Supabase guides](https://supabase.com/docs)
+- Consult [Paddle developer docs](https://developer.paddle.com/)
 
 ## License
 
@@ -183,7 +227,7 @@ This project is licensed under the MIT License.
 ## Support
 
 For support with:
-- **Paddle Billing**: Contact Paddle support
-- **Supabase**: Check Supabase documentation
-- **Expo**: Visit Expo documentation
-- **This Project**: Open an issue on GitHub
+- **Paddle Billing**: [Paddle Support](https://paddle.com/support)
+- **Supabase**: [Supabase Documentation](https://supabase.com/docs)
+- **Expo**: [Expo Documentation](https://docs.expo.dev/)
+- **This Project**: [Open an issue](https://github.com/your-repo/issues)
